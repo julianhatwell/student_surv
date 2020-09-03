@@ -1,0 +1,79 @@
+---
+title: "Student Retention Analysis with Survival Analytics"
+author: "Julian Hatwell"
+date: "30/11/2016"
+output: html_document
+bibliography: studentsurv.bib
+---
+
+```{r prologue, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE
+                      , message = FALSE
+                      , echo = FALSE
+                      )
+
+knitr::opts_template$set(
+  fig.wide = list(fig.height = 4.5, fig.width = 8, fig.align='center')
+  , fig.wideX = list(fig.height = 3, fig.width = 9, fig.align='center')
+  , fig.relaxed = list(fig.height = 6, fig.width = 8, fig.align='center')
+  , fig.tile = list(fig.height = 3, fig.width = 3, fig.align='center')
+)
+
+par(mar = c(4,3,3,1))
+```
+
+```{r initial_load}
+library(survival)
+library(asaur)
+library(survminer)
+library(muhaz)
+library(MASS)
+library(car)
+library(ggplot2)
+library(dplyr)
+
+expit <- function(o) exp(o)/(1 + exp(o))
+prog_length <- 52 * 3
+weeks <- 1:prog_length
+
+semester_ends <- c(13, 26, 40)
+semester_ends <- semester_ends + rep(c(0, 53, 105), each = 3)
+semester_ends <- c(0, semester_ends)
+
+# residency codes: 
+students <- read.csv("students.csv")
+```
+
+## Introduction
+
+Universities with a low dropout rate tend to be recognised in national rankings and attract the most applications each year, and consequently the choice of the best performing candidates. They also attract more government and corporate funding. These factors create a virtuous cycle of sustainability and places retention as a fundamental pillar of any university strategy. The holy grail of any student retention strategy is to identify the at-risk students as early as possible and intervene to help them with any barriers to success, be they academic, personal, medical or financial difficulties.
+
+Survival analytics is usually associated with the analysis of efficacy of medical treatments (and the literal survival of the study subjects). However, as a longitudinal data analytic technique, survival analytics is ideally suited for analysis, diagnosis and intervention in student retention/attrition studies. Several successful implementations of survival analytics models for identifying at risk students have been published, including @ameri_survival_2016; @chimka_interaction_2008; @lesik_developmental_2007; @radcliffe_modeling_2006.
+
+## Data Sources
+
+All large scale institutions collect detailed data about their students via multiple sources, including Student Management Systems, Attendance Tracking, Library and Resources Usage and Student Services Touch Points. However, the data are highly confidential and it is unusual to find such data sources shared for the open source community. This article uses a simulated data set that has been produced to model the same characteristics as a private institutional source and to ensure that none of the original data subjects could be identified. The original data source comprises longitutidal data for an entire cohort (year group) of undergraduates over a three year period, from year one semester one to year three graduation. The original data were gathered from the above mentioned systems of a private business school in South East Asia.
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| id | int | | unique id in this data set |
+| hs_dip | int | High School Graduation Diploma, Levels 1 (best) through 5 |
+| ethnicity | factor | Ethnicity Category 1 to 5 (unspecified) |
+| age | int | Age in years |
+| gender | factor| Gender codes: 1 Male, 2 Female, 3 Non-binary, 4 Rather not say |
+| clubmemb | int | Number of institutionally recognised extra-curricular student societies' memberships |
+| residency | factor | Residency codes: 1 In private residence, otherwise in residence as 2 Domestic student, 3 International Student |
+| oc | factor | Completed an orientation course in semester 1: Yes or No |
+| founda | factor | Completed an foundation course (only available to HS Dip Level 4 or 5): Yes or No |
+| visitlib | int | Number of library resource check outs |
+| med | int | Number of student services touch points on medical grounds |
+| per | int | Number of student services touch points on personal grounds |
+| fin | int | Number of student services touch points on financial grounds |
+| ft_pt | factor | Full-time or Part-time student: ft or pt |
+| attendance | num | Attendance rate |
+| week4_test | num | Formative test score (all students year one, semester one, week four) |
+| first_sem | num | Summative test score (all students year one, semester one, final week) |
+| attend_disc | factor | Attendance categories: Poor < 0.5, >= 0.5 OK < 0.75, >= 0.75 Good |
+| first_sem_disc | factor | Test Categories: Fail < 0.5, >= 0.5 Pass < 0.75, >= 0.75 Distinction |
+
+# References
